@@ -142,139 +142,13 @@ k8s 环境安装之前写过很多文档，可以参考我以下几篇文章：
 - [【云原生】k8s 环境快速部署（一小时以内部署完）](https://mp.weixin.qq.com/s?__biz=MzI3MDM5NjgwNg==&mid=2247486963&idx=1&sn=c1c094f338d88c44c5b573cb2dd0b10f&chksm=ead0f11adda7780cd32d0e87ac30db538b834668b6948b91ebf3db7b1a05cf5819fcd6f41506#rd)
 ## 四、ElasticSearch on K8s 开始部署
 ### 1）下载安装包
-地址：[https://artifacthub.io/packages/helm/elastic/elasticsearch](https://artifacthub.io/packages/helm/elastic/elasticsearch)
 
 ```bash
-# 添加数据源
-helm repo add elastic https://helm.elastic.co
-
-# 下载
-helm pull elastic/elasticsearch --version 7.17.3
-
-# 解压
-tar -xf elasticsearch-7.17.3.tgz
+git clone https://gitee.com/hadoop-bigdata/elasticsearch-kibana-on-k8s.git
+cd elasticsearch-kibana-on-k8s
 ```
-### 2）构建镜像
-Elasticsearch 各版本下载地址：[https://www.elastic.co/cn/downloads/past-releases#elasticsearch](https://www.elastic.co/cn/downloads/past-releases#elasticsearch)
 
-这里就不重新构建镜像了，有不知道怎么构建镜像的小伙伴可以给我留言或私信，这里是将远程的镜像推送到我们本地harbor，加速拉取镜像。
-```bash
-docker pull docker.elastic.co/elasticsearch/elasticsearch:7.17.3
-docker tag docker.elastic.co/elasticsearch/elasticsearch:7.17.3  registry.cn-hangzhou.aliyuncs.com/bigdata_cloudnative/elasticsearch:7.17.3
-
-# 上传镜像到阿里云镜像仓库
-docker push registry.cn-hangzhou.aliyuncs.com/bigdata_cloudnative/elasticsearch:7.17.3
-```
-### 3）修改yaml编排
-这里只显示修改部分，在最后会提供修改后的git下载地址。
-- `elasticsearch/values.yaml`
-```yaml
-image: "registry.cn-hangzhou.aliyuncs.com/bigdata_cloudnative/elasticsearch"
-
-### 去掉这几行
-volumeClaimTemplate:
-  accessModes: ["ReadWriteOnce"]
-  resources:
-    requests:
-      storage: 30Gi
-
-persistence:
-  enabled: true
-  labels:
-    # Add default labels for the volumeClaimTemplate of the StatefulSet
-    enabled: false
-  annotations: {}
-  accessModes:
-    - ReadWriteOnce
-  size: 1Gi
-  storageClass: "elasticsearch-local-storage"
-  local:
-  - name: elasticsearch-0
-    host: "local-168-182-110"
-    path: "/opt/bigdata/servers/elasticsearch/data/data1"
-  - name: elasticsearch-1
-    host: "local-168-182-111"
-    path: "/opt/bigdata/servers/elasticsearch/data/data1"
-  - name: elasticsearch-2
-    host: "local-168-182-112"
-    path: "/opt/bigdata/servers/elasticsearch/data/data1"
-
-protocol: http
-httpPort: 9200
-transportPort: 9300
-service:
-  enabled: true
-  type: NodePort
-  nodePort: 30920
-  httpPortName: http
-```
-- `elasticsearch/templates/storage-class.yaml`
-
-```yaml
-kind: StorageClass
-apiVersion: storage.k8s.io/v1
-metadata:
-  name: {{ .Values.persistence.storageClass }}
-provisioner: kubernetes.io/no-provisioner
-```
-- `elasticsearch/templates/pv.yaml`
-
-```yaml
-{{- range .Values.persistence.local }}
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: {{ .name }}
-  labels:
-    name: {{ .name }}
-spec:
-  storageClassName: {{ $.Values.persistence.storageClass }}
-  capacity:
-    storage: {{ $.Values.persistence.size }}
-  accessModes:
-  {{- range $.Values.persistence.accessModes }}
-    - {{ . | quote }}
-  {{- end }}
-  local:
-    path: {{ .path }}
-  nodeAffinity:
-    required:
-      nodeSelectorTerms:
-        - matchExpressions:
-            - key: kubernetes.io/hostname
-              operator: In
-              values:
-                - {{ .host }}
----
-{{- end }}
-```
-- `elasticsearch/templates/statefulset.yaml`
-
-```yaml
-spec:
-  volumeClaimTemplates:
-    spec:
-# 去掉这行
-{{ toYaml .Values.volumeClaimTemplate | indent 6 }}
-
-# 新增以下内容：
-      accessModes:
-      {{- range .Values.persistence.accessModes }}
-      - {{ . | quote }}
-      {{- end }}
-      resources:
-        requests:
-          storage: {{ .Values.persistence.size | quote }}
-    {{- if .Values.persistence.storageClass }}
-    {{- if (eq "-" .Values.persistence.storageClass) }}
-      storageClassName: ""
-    {{- else }}
-      storageClassName: "{{ .Values.persistence.storageClass }}"
-    {{- end }}
-    {{- end }}
-```
-### 4）开始部署
+### 2）开始部署
 
 ```bash
 # 如果没有挂载目录，则需要提前创建，也可自己更换挂载目录
@@ -306,7 +180,7 @@ NOTES:
 3. Test cluster health using Helm test.
   $ helm --namespace=elasticsearch test my-elasticsearch
 ```
-### 5）测试
+### 3）测试
 
 账号：`elastic`
 密码获取：
@@ -322,7 +196,7 @@ curl http://192.168.182.110:30920/_cat/health?pretty
 ```
 ![输入图片说明](images/2.png)
 
-### 6）elasticsearch-head
+### 4）elasticsearch-head
 elasticsearch-head GitHub下载地址：[https://github.com/mobz/elasticsearch-head](https://github.com/mobz/elasticsearch-head)
 Google 浏览器 `elasticsearch-head` 插件：
 
@@ -339,99 +213,13 @@ rm -fr /opt/bigdata/servers/elasticsearch/data/data1/*
 ## 五、Kibana 编排部署
 地址：[https://artifacthub.io/packages/helm/bitnami/kibana?modal=install](https://artifacthub.io/packages/helm/bitnami/kibana?modal=install)
 
-### 1）下载安装包
+### 1）下载安装包（如果上面下载了这里可忽略）
 
 ```bash
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm pull bitnami/kibana --version 10.2.6
-tar -xf kibana-10.2.6.tgz
+git clone https://gitee.com/hadoop-bigdata/elasticsearch-kibana-on-k8s.git
+cd elasticsearch-kibana-on-k8s
 ```
-### 2）构建镜像
-这里也不重新构建镜像了，只是将镜像推送到本地harbor加速，对构建镜像不清楚的可以留言或私信。Kibana 和 Elasticsearch 需保证所用版本互相兼容，版本兼容性：[https://www.elastic.co/cn/support/matrix#matrix_compatibility](https://www.elastic.co/cn/support/matrix#matrix_compatibility)
-![输入图片说明](images/3.png)
-
-```bash
-docker pull docker.io/bitnami/kibana:7.17.3
-docker tag docker.io/bitnami/kibana:7.17.3 registry.cn-hangzhou.aliyuncs.com/bigdata_cloudnative/kibana:7.17.3
-
-# 上传镜像
-docker push registry.cn-hangzhou.aliyuncs.com/bigdata_cloudnative/kibana:7.17.3
-```
-### 3）修改yaml编排
-- `kibana/values.yaml`
-```bash
-image:
-  registry: registry.cn-hangzhou.aliyuncs.com/bigdata_cloudnative
-  repository: kibana
-  tag: 7.17.3
-
-replicaCount: 1
-
-persistence:
-  enabled: true
-  accessModes:
-    - ReadWriteOnce
-  size: 10Gi
-  storageClass: "kibana-local-storage"
-  local:
-  - name: kibana-0
-    host: "local-168-182-111"
-    path: "/opt/bigdata/servers/kibana/data/data1"
-
-service:
-  ports:
-    http: 5601
-  type: NodePort
-  nodePorts:
-    http: "30601"
-
-elasticsearch:
-  hosts:
-    - elasticsearch-master.elasticsearch
-  port: "9200"
-```
-- `kibana/templates/values.yaml`
-
-```yaml
-{{- range .Values.persistence.local }}
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: {{ .name }}
-  labels:
-    name: {{ .name }}
-spec:
-  storageClassName: {{ $.Values.persistence.storageClass }}
-  capacity:
-    storage: {{ $.Values.persistence.size }}
-  accessModes:
-  {{- range $.Values.persistence.accessModes }}
-    - {{ . | quote }}
-  {{- end }}
-  local:
-    path: {{ .path }}
-  nodeAffinity:
-    required:
-      nodeSelectorTerms:
-        - matchExpressions:
-            - key: kubernetes.io/hostname
-              operator: In
-              values:
-                - {{ .host }}
----
-{{- end }}
-```
-- `kibana/templates/storage-class.yaml`
-
-```yaml
-kind: StorageClass
-apiVersion: storage.k8s.io/v1
-metadata:
-  name: {{ .Values.persistence.storageClass }}
-provisioner: kubernetes.io/no-provisioner
-```
-### 4）开始部署
+### 2）开始部署
 
 ```bash
 # 先创建本地存储目录
@@ -443,11 +231,11 @@ helm install my-kibana ./kibana -n kibana --create-namespace
 helm get notes my-kibana -n kibana 
 kubectl get pods,svc -n kibana -owide
 ```
-### 5）测试验证
+### 3）测试验证
 kibana web 地址：`http://192.168.182.110:30601/`
 ![输入图片说明](images/4.png)
 
-### 6）卸载
+### 4）卸载
 
 ```bash
 helm uninstall my-kibana -n kibana
