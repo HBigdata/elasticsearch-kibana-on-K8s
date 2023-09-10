@@ -445,7 +445,7 @@ kubectl get pods,svc -n kibana -owide
 ```
 ### 5）测试验证
 kibana web 地址：`http://192.168.182.110:30601/`
-![在这里插入图片描述](https://img-blog.csdnimg.cn/c0c0334577744bc4836cb6745f61e7dc.png)
+![输入图片说明](images/4.png)
 
 ### 6）卸载
 
@@ -805,4 +805,4 @@ PUT /_cluster/settings
 ElasticSearch+Kibana on K8s 讲解与实战操作就先到这里了，有任何疑问也可关注我公众号：大数据与云原生技术分享，进行技术交流，如本篇文章对您有所帮助，麻烦帮忙一键三连（**点赞、转发、收藏**）~
 
 
-![](https://img2023.cnblogs.com/blog/1601821/202309/1601821-20230910184943109-408474295.png)
+![输入图片说明](images/wx.png)
