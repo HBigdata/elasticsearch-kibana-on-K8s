@@ -29,7 +29,7 @@
 
 虽然这些步骤提供了在 Kubernetes 上部署 Elasticsearch 的高层次概述，但具体的步骤可能会根据你的用例和环境而有所不同。考虑使用 Kubernetes Operators、Helm 图表或其他工具来简化在 Kubernetes 中部署和管理 Elasticsearch 集群的过程。此外，请参考 Elasticsearch 和 Kubernetes 文档，获取详细的说明和最佳实践。
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/5e4ab27777e74b969dddaa0561ea914e.png)
+![输入图片说明](images/1.png)
 
 之前也写过关于很多关于 ElasticSearch 的文章，可以参考看看：
 - [【云原生】Elasticsearch + kibana on k8s 讲解与实战操作](https://mp.weixin.qq.com/s?__biz=MzI3MDM5NjgwNg==&mid=2247486614&idx=1&sn=a63433c801abe53f595ddee5c6f34d53&chksm=ead0f07fdda779696b2df5b92dacddea011d5dc42c333ec7cc7d86bc737fe61a9d7aa4b8ed0d#rd)
@@ -320,7 +320,7 @@ curl http://192.168.182.110:30920/
 curl http://192.168.182.110:30920/_cat/nodes
 curl http://192.168.182.110:30920/_cat/health?pretty
 ```
-![在这里插入图片描述](https://img-blog.csdnimg.cn/9fd6f1f3a0724f0cb4c7bd46b83eebdf.png)
+![输入图片说明](images/2.png)
 
 ### 6）elasticsearch-head
 elasticsearch-head GitHub下载地址：[https://github.com/mobz/elasticsearch-head](https://github.com/mobz/elasticsearch-head)
@@ -348,7 +348,7 @@ tar -xf kibana-10.2.6.tgz
 ```
 ### 2）构建镜像
 这里也不重新构建镜像了，只是将镜像推送到本地harbor加速，对构建镜像不清楚的可以留言或私信。Kibana 和 Elasticsearch 需保证所用版本互相兼容，版本兼容性：[https://www.elastic.co/cn/support/matrix#matrix_compatibility](https://www.elastic.co/cn/support/matrix#matrix_compatibility)
-![在这里插入图片描述](https://img-blog.csdnimg.cn/9dff699340414a57a582b2eb1f048fd9.png)
+![输入图片说明](images/3.png)
 
 ```bash
 docker pull docker.io/bitnami/kibana:7.17.3
