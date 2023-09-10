@@ -1,4 +1,3 @@
-[TOC]
 ## 一、概述
 在 `Kubernetes（K8s）`上运行 `Elasticsearch` 是一种在容器化环境中部署和管理 `Elasticsearch` 集群的常见方法。`Elasticsearch` 是一款流行的分布式搜索和分析引擎，而 `Kubernetes` 则提供了一个出色的平台，用于编排容器并管理 Elasticsearch 的可伸缩性和容错性。
 
